@@ -13,16 +13,17 @@ import Animated, {
   useCode,
   startClock,
   concat,
-  debug,
   clockRunning,
-  stopClock,
   interpolate,
+  Extrapolate,
 } from 'react-native-reanimated';
 
 const { width } = Dimensions.get('screen');
 
 const SVG_CANVAS_W = width / 2;
 const RADIUS = SVG_CANVAS_W / 2;
+const ITEMS_SIZE = [1, 2, 3, 4];
+const SUB_ITEMS_W = SVG_CANVAS_W / ITEMS_SIZE.length;
 
 const runProgress = (clock: Clock, intialPosition: number, toValue: number) => {
   const state = {
@@ -52,19 +53,18 @@ const runProgress = (clock: Clock, intialPosition: number, toValue: number) => {
   ]);
 };
 
-export default function SvgComponent(props) {
+export default function SvgComponent() {
   const clock = useRef(new Clock()).current;
 
-  const progress_line_1 = useRef(new Animated.Value(0)).current;
-  const progress_line_2 = useRef(new Animated.Value(0)).current;
+  const progress = useRef(new Animated.Value(0)).current;
 
-  useCode(
-    () => [
-      set(progress_line_1, runProgress(clock, 0, 365)),
-      set(progress_line_2, runProgress(clock, 45, 410)),
-    ],
-    []
-  );
+  useCode(() => [set(progress, runProgress(clock, 0, 365))], []);
+
+  const opacity = interpolate(progress, {
+    inputRange: [270, 310, 360],
+    outputRange: [0, 1, 0],
+    extrapolate: Extrapolate.CLAMP,
+  });
 
   return (
     <View
@@ -82,132 +82,68 @@ export default function SvgComponent(props) {
           borderRadius: RADIUS,
           borderWidth: StyleSheet.hairlineWidth,
           borderColor: 'rgba(63, 89, 64, 1)',
+          overflow: 'hidden',
         }}
       >
+        {[0, 1, 2].map((item) => {
+          const left = SVG_CANVAS_W * (0.2 + item / 10);
+          const top = SVG_CANVAS_W * (0.15 + (item * 10) / 100);
+          return (
+            <Animated.View
+              key={item.toString()}
+              style={{
+                opacity,
+                zIndex: 333,
+                position: 'absolute',
+                left,
+                top,
+                width: SVG_CANVAS_W * 0.06,
+                height: SVG_CANVAS_W * 0.06,
+                borderRadius: (SVG_CANVAS_W * 0.06) / 2,
+                backgroundColor: 'rgba(255, 199, 35, 1)',
+              }}
+            />
+          );
+        })}
+        {ITEMS_SIZE.map((item) => {
+          const size = SUB_ITEMS_W * item;
+          return (
+            <View
+              key={item.toString()}
+              style={{
+                position: 'absolute',
+                top: RADIUS - size / 2,
+                left: RADIUS - size / 2,
+                width: size,
+                height: size,
+                borderRadius: size / 2,
+                borderWidth: StyleSheet.hairlineWidth,
+                borderColor: 'rgba(63, 89, 64, 1)',
+                zIndex: 3333,
+              }}
+            />
+          );
+        })}
+
         <Animated.View
           style={{
             position: 'absolute',
-            top: RADIUS,
-            height: StyleSheet.hairlineWidth,
-            width: RADIUS,
-            backgroundColor: 'rgba(63, 89, 64, 1)',
+            left: RADIUS / 2,
+            backgroundColor: '#fff',
+            width: 0,
+            height: 0,
+            borderLeftWidth: RADIUS / 2,
+            borderRightWidth: RADIUS / 2,
+            borderTopWidth: RADIUS,
+            borderTopColor: 'rgba(33, 199, 35, .9)',
             transform: [
-              { translateX: RADIUS / 2 },
-              { rotate: concat(progress_line_1, 'deg') },
-              { translateX: -(RADIUS / 2) },
-            ],
-          }}
-        />
-        <Animated.View
-          style={{
-            position: 'absolute',
-            top: RADIUS,
-            height: StyleSheet.hairlineWidth,
-            width: RADIUS,
-            backgroundColor: 'rgba(63, 89, 64, 1)',
-            transform: [
-              { translateX: RADIUS / 2 },
-              { rotate: concat(progress_line_2, 'deg') },
-              { translateX: -(RADIUS / 2) },
+              { translateY: RADIUS / 2 },
+              { rotate: concat(progress, 'deg') },
+              { translateY: -(RADIUS / 2) },
             ],
           }}
         />
       </View>
-      {/* <Svg
-        height={SVG_CANVAS_H}
-        width={SVG_CANVAS_W}
-        viewBox={`0 0 ${SVG_CANVAS_W * 1.06} ${SVG_CANVAS_H * 1.06}`}
-        {...props}
-        style={{ borderWidth: 1, borderColor: 'red' }}
-      > */}
-      {/* <Circle
-          translateX={RADIUS * 1.06}
-          translateY={SVG_CANVAS_H / 2}
-          r={RADIUS}
-          stroke="rgba(63, 89, 64, 1)"
-          strokeWidth={StyleSheet.hairlineWidth}
-        />
-        <View
-          style={{
-            position: 'absolute',
-            top: SVG_CANVAS_H / 2 - StyleSheet.hairlineWidth,
-            height: StyleSheet.hairlineWidth,
-            width: RADIUS,
-            transform: [
-              // { translateX: (RADIUS * 1.06 - StyleSheet.hairlineWidth) / 2 },
-              { translateX: RADIUS * 0.06 },
-              { translateX: RADIUS / 2 },
-              { rotate: '90deg' },
-
-              { translateX: RADIUS / -2 },
-              { translateX: RADIUS * -0.06 },
-              // { translateX: (-RADIUS * 1.06 - StyleSheet.hairlineWidth) / 2 },
-            ],
-            backgroundColor: 'rgba(33, 199, 35, 1)',
-          }}
-        />
-        <View
-          style={{
-            position: 'absolute',
-            top: SVG_CANVAS_H / 2,
-            height: StyleSheet.hairlineWidth,
-            width: RADIUS * 1.06 - StyleSheet.hairlineWidth,
-            transform: [
-              { translateX: (RADIUS * 1.06) / 2 },
-              { rotate: '45deg' },
-              { translateX: (-RADIUS * 1.06) / 2 },
-            ],
-            backgroundColor: 'rgba(255, 100, 0, 1)',
-          }}
-        /> */}
-      {/* <Circle
-          cx="50"
-          cy="50"
-          r="35"
-          stroke="rgba(63, 89, 64, 1)"
-          strokeWidth={StyleSheet.hairlineWidth}
-        />
-        <Circle
-          cx="50"
-          cy="50"
-          r="25"
-          stroke="rgba(63, 89, 64, 1)"
-          strokeWidth={StyleSheet.hairlineWidth}
-        />
-        <Circle
-          cx="50"
-          cy="50"
-          r="15"
-          stroke="rgba(63, 89, 64, 1)"
-          strokeWidth={StyleSheet.hairlineWidth}
-        />
-        <View
-          style={{
-            position: 'absolute',
-            top: SVG_CANVAS_H / 2,
-            height: StyleSheet.hairlineWidth,
-            width: 30,
-            backgroundColor: 'rgba(33, 199, 35, 1)',
-          }}
-        /> */}
-      {/* <Line
-          x1="0"
-          y1="50"
-          x2="90"
-          y2="50"
-          stroke="rgba(33, 199, 35, 1)"
-          strokeWidth={StyleSheet.hairlineWidth}
-          translateX={5}
-        />
-        <Line
-          x1="0"
-          y1="80"
-          x2="90"
-          y2="80"
-          stroke="rgba(33, 199, 35, 1)"
-          strokeWidth={StyleSheet.hairlineWidth}
-        /> */}
-      {/* </Svg> */}
     </View>
   );
 }
