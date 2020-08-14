@@ -10,7 +10,6 @@ import Animated, {
   eq,
   set,
   not,
-  useCode,
   startClock,
   concat,
   clockRunning,
@@ -46,8 +45,6 @@ const runProgress = (clock: Clock, intialPosition: number, toValue: number) => {
       set(state.finished, 0),
       set(state.frameTime, 0),
       set(state.position, intialPosition),
-      set(state.time, 0),
-      state.position,
     ]),
     state.position,
   ]);
@@ -56,9 +53,7 @@ const runProgress = (clock: Clock, intialPosition: number, toValue: number) => {
 export default function SvgComponent() {
   const clock = useRef(new Clock()).current;
 
-  const progress = useRef(new Animated.Value(0)).current;
-
-  useCode(() => [set(progress, runProgress(clock, 0, 365))], []);
+  const progress = runProgress(clock, 0, 360);
 
   const opacity = interpolate(progress, {
     inputRange: [270, 310, 360],
